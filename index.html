@@ -213,15 +213,23 @@
 
   <!-- 書類一覧 -->
   <div class="panel" id="docPanel" style="display:none">
-    <div class="panel-header">
-      <span class="panel-title" id="docPanelTitle">書類一覧</span>
+    <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="panel-title" id="docPanelTitle">書類一覧</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--text-sub);white-space:nowrap;">一覧タイトル</span>
+        <input type="text" id="docPanelTitleEdit"
+          placeholder="例: 25年03月度確定申告_必要書類一覧"
+          oninput="updateProjectName(this.value)"
+          style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:var(--surface);color:var(--text);outline:none;">
+      </div>
     </div>
     <div class="doc-table-header">
       <span>書類名</span><span>提出期日</span><span>提出ステータス</span><span>コメント</span>
     </div>
     <div id="docList"></div>
     <div class="add-form">
-      <input type="text" id="newDocProject" placeholder="プロジェクト名（例: 25年03月度確定申告）" style="flex:2;min-width:200px">
       <input type="text" id="newDocName" placeholder="書類名を入力">
       <input type="date" id="newDocDate">
       <button class="btn btn-primary" onclick="addDocument()">追加</button>
@@ -284,20 +292,20 @@ let data={
   ],
   documents:{
     c1:[
-      {id:'d1',name:'源泉徴収票',due:'2025-02-28',status:'complete',comment:'受領・確認済み',project:'25年03月度確定申告'},
-      {id:'d2',name:'医療費領収書',due:'2025-02-28',status:'submitted',comment:'',project:'25年03月度確定申告'},
-      {id:'d3',name:'控除証明書（生命保険等）',due:'2025-02-28',status:'checking',comment:'金額が不鮮明です。再送をお願いします。',project:'25年03月度確定申告'},
-      {id:'d4',name:'マイナンバー関連書類',due:'2025-02-28',status:'pending',comment:'',project:'25年03月度確定申告'},
-      {id:'d5',name:'確定申告書の控え',due:'2025-03-15',status:'complete',comment:'',project:'25年03月度確定申告'},
+      {id:'d1',name:'源泉徴収票',due:'2025-02-28',status:'complete',comment:'受領・確認済み'},
+      {id:'d2',name:'医療費領収書',due:'2025-02-28',status:'submitted',comment:''},
+      {id:'d3',name:'控除証明書（生命保険等）',due:'2025-02-28',status:'checking',comment:'金額が不鮮明です。再送をお願いします。'},
+      {id:'d4',name:'マイナンバー関連書類',due:'2025-02-28',status:'pending',comment:''},
+      {id:'d5',name:'確定申告書の控え',due:'2025-03-15',status:'complete',comment:''},
     ],
     c2:[
-      {id:'d6',name:'源泉徴収票',due:'2025-02-28',status:'complete',comment:'',project:'25年03月度確定申告'},
-      {id:'d7',name:'医療費領収書',due:'2025-02-28',status:'missing',comment:'昨年の領収書と混在しています。仕分けの上、再送ください。',project:'25年03月度確定申告'},
-      {id:'d8',name:'マイナンバー関連書類',due:'2025-02-28',status:'complete',comment:'',project:'25年03月度確定申告'},
+      {id:'d6',name:'源泉徴収票',due:'2025-02-28',status:'complete',comment:''},
+      {id:'d7',name:'医療費領収書',due:'2025-02-28',status:'missing',comment:'昨年の領収書と混在しています。仕分けの上、再送ください。'},
+      {id:'d8',name:'マイナンバー関連書類',due:'2025-02-28',status:'complete',comment:''},
     ],
     c3:[
-      {id:'d9',name:'源泉徴収票',due:'2025-02-28',status:'pending',comment:'',project:'25年03月度確定申告'},
-      {id:'d10',name:'控除証明書（生命保険等）',due:'2025-02-28',status:'pending',comment:'',project:'25年03月度確定申告'},
+      {id:'d9',name:'源泉徴収票',due:'2025-02-28',status:'pending',comment:''},
+      {id:'d10',name:'控除証明書（生命保険等）',due:'2025-02-28',status:'pending',comment:''},
     ]
   }
 };
@@ -393,11 +401,21 @@ function selectCustomer(id){
   renderCustomerGrid();
   const c=data.customers.find(c=>c.id===id);
   document.getElementById('docPanel').style.display='block';
-  document.getElementById('docPanelTitle').textContent=c.name+' の書類一覧';
+  // パネルタイトルはプロジェクト名（未設定なら顧客名）
+  const title=c.project||c.name+' の書類一覧';
+  document.getElementById('docPanelTitle').textContent=title;
+  document.getElementById('docPanelTitleEdit').value=c.project||'';
   const baseUrl=window.location.href.split('?')[0];
-  // URLパラメータは顧客CDに統一
   document.getElementById('shareUrlDisplay').textContent=`${baseUrl}?client=${c.code}`;
   renderDocList();
+}
+
+function updateProjectName(val){
+  const c=data.customers.find(c=>c.id===selectedCustomerId);
+  if(!c) return;
+  c.project=val;
+  const title=val||c.name+' の書類一覧';
+  document.getElementById('docPanelTitle').textContent=title;
 }
 
 function renderDocList(){
@@ -445,14 +463,12 @@ function removeDoc(docId){
 }
 
 function addDocument(){
-  const project=document.getElementById('newDocProject').value.trim();
   const name=document.getElementById('newDocName').value.trim();
   const due=document.getElementById('newDocDate').value;
   if(!name){showToast('書類名を入力してください');return;}
   if(!data.documents[selectedCustomerId]) data.documents[selectedCustomerId]=[];
-  const newDoc={id:'d'+Date.now(),name,due,status:'pending',comment:'',project};
+  const newDoc={id:'d'+Date.now(),name,due,status:'pending',comment:''};
   data.documents[selectedCustomerId].push(newDoc);
-  document.getElementById('newDocProject').value='';
   document.getElementById('newDocName').value='';
   document.getElementById('newDocDate').value='';
   renderDocList();renderCustomerGrid();
@@ -460,16 +476,27 @@ function addDocument(){
 }
 
 function showAddCustomer(){
-  const name=prompt('お客様の氏名を入力してください:');
-  if(!name||!name.trim()) return;
-  const code=prompt('顧客CDを入力してください（例: C041）:');
-  if(!code||!code.trim()) return;
-  if(data.customers.find(c=>c.code===code.trim())){showToast('その顧客CDはすでに使用されています');return;}
+  const input=prompt('顧客CDまたはお客様名を入力してください:\n（どちらか1つでもOK）\n\n例①  C041\n例②  山田 太郎\n例③  C041 山田 太郎');
+  if(!input||!input.trim()) return;
+  const parts=input.trim().split(/\s+/);
+  let code='',name='';
+  // 先頭がアルファベット＋数字なら顧客CD、それ以外は名前
+  if(/^[A-Za-z][A-Za-z0-9_-]*$/.test(parts[0])){
+    code=parts[0];
+    name=parts.slice(1).join(' ');
+  } else {
+    name=parts.join(' ');
+  }
+  if(!code && !name){showToast('入力内容が正しくありません');return;}
+  // コードが空の場合はタイムスタンプで自動生成
+  if(!code) code='C'+Date.now().toString().slice(-6);
+  if(!name) name=code;
+  if(data.customers.find(c=>c.code===code)){showToast('その顧客CDはすでに使用されています');return;}
   const id='c'+Date.now();
-  data.customers.push({id,name:name.trim(),code:code.trim()});
+  data.customers.push({id,name,code,project:''});
   data.documents[id]=[];
   renderCustomerGrid();
-  showToast(`「${name.trim()}」(${code.trim()}) を追加しました`);
+  showToast(`「${name}」(${code}) を追加しました`);
 }
 
 function copyShareUrl(){
@@ -502,7 +529,7 @@ function showClientDoc(customerId){
   document.getElementById('sumSubmitted').textContent=docs.filter(d=>['submitted','complete'].includes(d.status)).length;
   document.getElementById('sumPending').textContent=docs.filter(d=>d.status==='pending').length;
   document.getElementById('sumMissing').textContent=docs.filter(d=>['missing','checking'].includes(d.status)).length;
-  document.getElementById('clientSub').textContent=`全${docs.length}書類　最終更新：${new Date().toLocaleDateString('ja-JP')}`;
+  document.getElementById('clientSub').textContent=(c.project?c.project+'　':'')+`全${docs.length}書類　最終更新：${new Date().toLocaleDateString('ja-JP')}`;
   const list=document.getElementById('clientDocList');
   if(docs.length===0){list.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">登録された書類はありません</div></div>';return;}
   list.innerHTML=docs.map(d=>`
@@ -510,7 +537,7 @@ function showClientDoc(customerId){
       <div class="doc-icon ${d.status}">${STATUS_ICONS[d.status]}</div>
       <div class="doc-info">
         <div class="doc-info-name">${d.name}</div>
-        <div class="doc-info-meta">期日：${d.due||'未設定'}　　${STATUS_LABELS[d.status]}${d.project?`　📁 ${d.project}`:''}</div>
+        <div class="doc-info-meta">期日：${d.due||'未設定'}　　${STATUS_LABELS[d.status]}</div>
         ${d.comment?`<div class="doc-info-comment">💬 ${d.comment}</div>`:''}
       </div>
       <span class="status-badge status-${d.status}">${STATUS_LABELS[d.status]}</span>
@@ -528,7 +555,7 @@ function exportForKintone(){
       records.push({
         顧客CD: c.code,
         顧客名: c.name,
-        プロジェクト名: d.project||'',
+        プロジェクト名: c.project||'',
         書類名: d.name,
         提出期日: d.due||'',
         提出ステータス: STATUS_LABELS[d.status]||d.status,
