@@ -154,7 +154,7 @@
   .doc-table { width: 100%; }
   .doc-table-header {
     display: grid;
-    grid-template-columns: 1fr 100px 130px 1fr 80px;
+    grid-template-columns: 1fr 100px 130px 1fr;
     gap: 0;
     padding: 10px 16px;
     background: var(--surface2);
@@ -167,7 +167,7 @@
   }
   .doc-row {
     display: grid;
-    grid-template-columns: 1fr 100px 130px 1fr 80px;
+    grid-template-columns: 1fr 100px 130px 1fr;
     gap: 0;
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
@@ -404,13 +404,17 @@
 
   /* ========= RESPONSIVE ========= */
   @media (max-width: 640px) {
-    .doc-table-header, .doc-row {
-      grid-template-columns: 1fr 90px;
+    .doc-table-header { display: none; }
+    .doc-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 16px;
     }
-    .doc-table-header span:nth-child(n+3),
-    .doc-row > *:nth-child(n+3) {
-      display: none;
-    }
+    .doc-row .doc-name { font-size: 13px; font-weight: 500; }
+    .doc-row .doc-date { font-size: 11px; }
+    .doc-row .status-select { width: 100%; }
+    .doc-row .comment-input { width: 100%; }
     .customer-grid { grid-template-columns: repeat(2, 1fr); }
     .client-summary { grid-template-columns: repeat(3, 1fr); }
   }
@@ -455,7 +459,6 @@
       <span>提出期日</span>
       <span>ステータス</span>
       <span>コメント</span>
-      <span>操作</span>
     </div>
     <div id="docList"></div>
     <div class="add-form" id="addDocForm">
@@ -631,18 +634,18 @@ function renderDocList() {
   }
   list.innerHTML = docs.map((d, i) => `
     <div class="doc-row">
-      <div class="doc-name">${d.name}</div>
-      <div class="doc-date">${d.due || '—'}</div>
+      <div class="doc-name" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span>${d.name}</span>
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;flex-shrink:0" onclick="removeDoc('${d.id}')">削除</button>
+      </div>
+      <div class="doc-date">期日：${d.due || '未設定'}</div>
       <div>
         <select class="status-select" onchange="updateStatus('${d.id}', this.value)">
           ${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${d.status===k?'selected':''}>${STATUS_ICONS[k]} ${v}</option>`).join('')}
         </select>
       </div>
       <div>
-        <input class="comment-input" value="${d.comment}" placeholder="コメント…" onchange="updateComment('${d.id}', this.value)">
-      </div>
-      <div>
-        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px" onclick="removeDoc('${d.id}')">削除</button>
+        <input class="comment-input" value="${d.comment}" placeholder="コメント（お客様にも表示されます）…" onchange="updateComment('${d.id}', this.value)">
       </div>
     </div>`).join('');
 }
