@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>書類提出状況 | 申告サポート</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --surface2: #faf8f5;
+    --border: #e8e2d9;
+    --text: #1a1714;
+    --text-sub: #7a7065;
+    --accent: #2d5be3;
+    --accent-light: #eef1fd;
+    --green: #1a8f5c;
+    --green-light: #e6f5ef;
+    --orange: #d4620a;
+    --orange-light: #fdf0e6;
+    --red: #c0392b;
+    --red-light: #fdecea;
+    --yellow: #b58900;
+    --yellow-light: #fdf8e6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ========= HEADER ========= */
+  .header {
+    background: var(--text);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 500;
+    flex: 1;
+    text-align: center;
+  }
+  .mode-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.15);
+    letter-spacing: 0.05em;
+  }
+  .mode-badge.admin { background: var(--accent); }
+
+  /* ========= MODE SWITCH ========= */
+  .mode-switch-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 0;
+  }
+  .mode-tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-sub);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .mode-tab:hover { color: var(--text); }
+  .mode-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ========= MAIN LAYOUT ========= */
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ========= ADMIN PANEL ========= */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+  .panel-title { font-size: 13px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-sub); text-transform: uppercase; }
+
+  /* ========= CUSTOMER SELECTOR ========= */
+  .customer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    padding: 16px;
+  }
+  .customer-card {
+    padding: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    background: var(--surface);
+  }
+  .customer-card:hover { border-color: var(--accent); background: var(--accent-light); }
+  .customer-card.selected { border-color: var(--accent); background: var(--accent-light); }
+  .customer-card .name { font-size: 13px; font-weight: 500; }
+  .customer-card .progress {
+    margin-top: 6px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-sub);
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* ========= DOCUMENT TABLE ========= */
+  .doc-table { width: 100%; }
+  .doc-table-header {
+    display: grid;
+    grid-template-columns: 1fr 100px 130px 1fr 80px;
+    gap: 0;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-sub);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .doc-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 130px 1fr 80px;
+    gap: 0;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.1s;
+  }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-row:hover { background: var(--surface2); }
+  .doc-name { font-size: 13px; font-weight: 500; }
+  .doc-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-sub); }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status-submitted { background: var(--green-light); color: var(--green); }
+  .status-pending { background: var(--yellow-light); color: var(--yellow); }
+  .status-checking { background: var(--orange-light); color: var(--orange); }
+  .status-complete { background: var(--accent-light); color: var(--accent); }
+  .status-missing { background: var(--red-light); color: var(--red); }
+
+  .comment-cell { font-size: 12px; color: var(--text-sub); }
+  .comment-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .comment-input:focus { border-color: var(--accent); }
+
+  /* ========= STATUS DROPDOWN ========= */
+  .status-select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    width: 100%;
+  }
+  .status-select:focus { border-color: var(--accent); }
+
+  /* ========= SHARE URL ========= */
+  .share-box {
+    padding: 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+  .share-label { font-size: 11px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .share-url-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .share-url {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: #d8d2c9; }
+
+  /* ========= ADD DOCUMENT FORM ========= */
+  .add-form {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .add-form input, .add-form select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .add-form input:focus, .add-form select:focus { border-color: var(--accent); }
+  .add-form input[type="text"] { flex: 1; min-width: 140px; }
+  .add-form input[type="date"] { width: 140px; }
+
+  /* ========= CLIENT VIEW ========= */
+  .client-search {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .client-search input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .client-search input:focus { border-color: var(--accent); }
+
+  .client-header {
+    background: var(--text);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 24px;
+  }
+  .client-header .greeting { font-size: 12px; opacity: 0.6; margin-bottom: 4px; }
+  .client-header .name { font-size: 20px; font-weight: 700; }
+  .client-header .sub { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+
+  .client-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-item {
+    background: var(--surface);
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-num { font-size: 28px; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; }
+  .summary-label { font-size: 10px; color: var(--text-sub); margin-top: 4px; font-weight: 500; }
+  .summary-item.green .summary-num { color: var(--green); }
+  .summary-item.orange .summary-num { color: var(--orange); }
+  .summary-item.red .summary-num { color: var(--red); }
+
+  .client-doc-list { }
+  .client-doc-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .client-doc-item:last-child { border-bottom: none; }
+  .doc-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .doc-icon.submitted { background: var(--green-light); }
+  .doc-icon.pending { background: var(--yellow-light); }
+  .doc-icon.checking { background: var(--orange-light); }
+  .doc-icon.complete { background: var(--accent-light); }
+  .doc-icon.missing { background: var(--red-light); }
+
+  .doc-info { flex: 1; }
+  .doc-info-name { font-size: 14px; font-weight: 500; }
+  .doc-info-meta { font-size: 11px; color: var(--text-sub); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .doc-info-comment {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-sub);
+    background: var(--surface2);
+    border-left: 2px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* ========= TOAST ========= */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ========= EMPTY STATE ========= */
+  .empty { padding: 40px; text-align: center; color: var(--text-sub); }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .empty-text { font-size: 14px; }
+
+  /* ========= RESPONSIVE ========= */
+  @media (max-width: 640px) {
+    .doc-table-header, .doc-row {
+      grid-template-columns: 1fr 90px;
+    }
+    .doc-table-header span:nth-child(n+3),
+    .doc-row > *:nth-child(n+3) {
+      display: none;
+    }
+    .customer-grid { grid-template-columns: repeat(2, 1fr); }
+    .client-summary { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">申告サポート</div>
+  <div class="header-title">書類提出状況管理</div>
+  <div class="mode-badge admin" id="headerBadge">管理者</div>
+</div>
+
+<div class="mode-switch-bar">
+  <button class="mode-tab active" onclick="switchMode('admin')">📋 管理画面</button>
+  <button class="mode-tab" onclick="switchMode('client')">👤 お客様確認</button>
+</div>
+
+<!-- ======= ADMIN VIEW ======= -->
+<div id="adminView">
+<div class="container">
+
+  <!-- Customer List -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">お客様一覧</span>
+      <button class="btn btn-primary" onclick="showAddCustomer()">＋ お客様を追加</button>
+    </div>
+    <div class="customer-grid" id="customerGrid"></div>
+  </div>
+
+  <!-- Document Management -->
+  <div class="panel" id="docPanel" style="display:none">
+    <div class="panel-header">
+      <span class="panel-title" id="docPanelTitle">書類一覧</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="copyShareUrl()">🔗 URL をコピー</button>
+      </div>
+    </div>
+    <div class="doc-table-header">
+      <span>書類名</span>
+      <span>提出期日</span>
+      <span>ステータス</span>
+      <span>コメント</span>
+      <span>操作</span>
+    </div>
+    <div id="docList"></div>
+    <div class="add-form" id="addDocForm">
+      <input type="text" id="newDocName" placeholder="書類名を入力">
+      <input type="date" id="newDocDate">
+      <button class="btn btn-primary" onclick="addDocument()">追加</button>
+    </div>
+    <div class="share-box">
+      <div class="share-label">お客様共有URL</div>
+      <div class="share-url-row">
+        <div class="share-url" id="shareUrlDisplay">お客様を選択すると表示されます</div>
+        <button class="btn btn-primary" onclick="copyShareUrl()">コピー</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ======= CLIENT VIEW ======= -->
+<div id="clientView" style="display:none">
+<div class="container">
+  <div class="panel">
+    <div style="padding:16px">
+      <div class="share-label" style="margin-bottom:8px">お名前で検索</div>
+      <div class="client-search">
+        <input type="text" id="clientSearchInput" placeholder="例：山田 太郎" oninput="searchClient()">
+      </div>
+      <div id="clientSearchResults"></div>
+    </div>
+  </div>
+
+  <div id="clientDocView" style="display:none">
+    <div class="panel">
+      <div class="client-header">
+        <div class="greeting">申告サポート　書類提出状況のご確認</div>
+        <div class="name" id="clientName">—</div>
+        <div class="sub" id="clientSub">—</div>
+      </div>
+      <div class="client-summary">
+        <div class="summary-item green">
+          <div class="summary-num" id="sumSubmitted">0</div>
+          <div class="summary-label">提出済み</div>
+        </div>
+        <div class="summary-item orange">
+          <div class="summary-num" id="sumPending">0</div>
+          <div class="summary-label">未提出</div>
+        </div>
+        <div class="summary-item red">
+          <div class="summary-num" id="sumMissing">0</div>
+          <div class="summary-label">要確認</div>
+        </div>
+      </div>
+      <div class="client-doc-list" id="clientDocList"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========= DATA =========
+const STATUS_LABELS = {
+  pending: '未提出',
+  submitted: '提出済み',
+  checking: '確認中',
+  complete: '完了',
+  missing: '書類不備'
+};
+const STATUS_ICONS = {
+  pending: '⏳',
+  submitted: '📤',
+  checking: '🔍',
+  complete: '✅',
+  missing: '⚠️'
+};
+
+// サンプルデータ
+let data = {
+  customers: [
+    { id: 'c1', name: '山田 太郎', code: 'yamada' },
+    { id: 'c2', name: '鈴木 花子', code: 'suzuki' },
+    { id: 'c3', name: '田中 一郎', code: 'tanaka' },
+  ],
+  documents: {
+    c1: [
+      { id: 'd1', name: '源泉徴収票', due: '2025-02-28', status: 'complete', comment: '受領・確認済み' },
+      { id: 'd2', name: '医療費領収書', due: '2025-02-28', status: 'submitted', comment: '' },
+      { id: 'd3', name: '控除証明書（生命保険等）', due: '2025-02-28', status: 'checking', comment: '金額が不鮮明です。再送をお願いします。' },
+      { id: 'd4', name: 'マイナンバー関連書類', due: '2025-02-28', status: 'pending', comment: '' },
+      { id: 'd5', name: '確定申告書の控え', due: '2025-03-15', status: 'pending', comment: '' },
+    ],
+    c2: [
+      { id: 'd6', name: '源泉徴収票', due: '2025-02-28', status: 'complete', comment: '' },
+      { id: 'd7', name: '医療費領収書', due: '2025-02-28', status: 'missing', comment: '昨年の領収書と混在しています。仕分けの上、再送ください。' },
+      { id: 'd8', name: 'マイナンバー関連書類', due: '2025-02-28', status: 'complete', comment: '' },
+    ],
+    c3: [
+      { id: 'd9', name: '源泉徴収票', due: '2025-02-28', status: 'pending', comment: '' },
+      { id: 'd10', name: '控除証明書（生命保険等）', due: '2025-02-28', status: 'pending', comment: '' },
+    ]
+  }
+};
+
+let selectedCustomerId = null;
+let currentMode = 'admin';
+
+// ========= INIT =========
+function init() {
+  renderCustomerGrid();
+  // URLパラメータでお客様ビューを自動表示
+  const params = new URLSearchParams(window.location.search);
+  const clientCode = params.get('client');
+  if (clientCode) {
+    switchMode('client');
+    const c = data.customers.find(c => c.code === clientCode);
+    if (c) showClientDoc(c.id);
+  }
+}
+
+// ========= MODE SWITCH =========
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('adminView').style.display = mode === 'admin' ? 'block' : 'none';
+  document.getElementById('clientView').style.display = mode === 'client' ? 'block' : 'none';
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', (mode === 'admin' && i === 0) || (mode === 'client' && i === 1));
+  });
+  document.getElementById('headerBadge').textContent = mode === 'admin' ? '管理者' : 'お客様';
+  document.getElementById('headerBadge').className = 'mode-badge' + (mode === 'admin' ? ' admin' : '');
+}
+
+// ========= CUSTOMER GRID =========
+function renderCustomerGrid() {
+  const grid = document.getElementById('customerGrid');
+  if (data.customers.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">お客様を追加してください</div></div>';
+    return;
+  }
+  grid.innerHTML = data.customers.map(c => {
+    const docs = data.documents[c.id] || [];
+    const done = docs.filter(d => d.status === 'complete' || d.status === 'submitted').length;
+    const pct = docs.length ? Math.round(done / docs.length * 100) : 0;
+    return `
+      <div class="customer-card ${selectedCustomerId === c.id ? 'selected' : ''}" onclick="selectCustomer('${c.id}')">
+        <div class="name">${c.name}</div>
+        <div class="progress">${done}/${docs.length} 提出</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+// ========= SELECT CUSTOMER =========
+function selectCustomer(id) {
+  selectedCustomerId = id;
+  renderCustomerGrid();
+  const c = data.customers.find(c => c.id === id);
+  document.getElementById('docPanel').style.display = 'block';
+  document.getElementById('docPanelTitle').textContent = c.name + ' の書類一覧';
+  const baseUrl = window.location.href.split('?')[0];
+  document.getElementById('shareUrlDisplay').textContent = `${baseUrl}?client=${c.code}`;
+  renderDocList();
+}
+
+// ========= DOC LIST =========
+function renderDocList() {
+  const docs = data.documents[selectedCustomerId] || [];
+  const list = document.getElementById('docList');
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">書類を追加してください</div></div>';
+    return;
+  }
+  list.innerHTML = docs.map((d, i) => `
+    <div class="doc-row">
+      <div class="doc-name">${d.name}</div>
+      <div class="doc-date">${d.due || '—'}</div>
+      <div>
+        <select class="status-select" onchange="updateStatus('${d.id}', this.value)">
+          ${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${d.status===k?'selected':''}>${STATUS_ICONS[k]} ${v}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <input class="comment-input" value="${d.comment}" placeholder="コメント…" onchange="updateComment('${d.id}', this.value)">
+      </div>
+      <div>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px" onclick="removeDoc('${d.id}')">削除</button>
+      </div>
+    </div>`).join('');
+}
+
+function updateStatus(docId, newStatus) {
+  for (const cid in data.documents) {
+    const doc = data.documents[cid].find(d => d.id === docId);
+    if (doc) { doc.status = newStatus; break; }
+  }
+  renderCustomerGrid();
+  showToast('ステータスを更新しました');
+}
+
+function updateComment(docId, comment) {
+  for (const cid in data.documents) {
+    const doc = data.documents[cid].find(d => d.id === docId);
+    if (doc) { doc.comment = comment; break; }
+  }
+  showToast('コメントを保存しました');
+}
+
+function removeDoc(docId) {
+  if (!confirm('この書類を削除しますか？')) return;
+  data.documents[selectedCustomerId] = data.documents[selectedCustomerId].filter(d => d.id !== docId);
+  renderDocList();
+  renderCustomerGrid();
+}
+
+function addDocument() {
+  const name = document.getElementById('newDocName').value.trim();
+  const due = document.getElementById('newDocDate').value;
+  if (!name) { showToast('書類名を入力してください'); return; }
+  if (!data.documents[selectedCustomerId]) data.documents[selectedCustomerId] = [];
+  data.documents[selectedCustomerId].push({
+    id: 'd' + Date.now(),
+    name, due, status: 'pending', comment: ''
+  });
+  document.getElementById('newDocName').value = '';
+  document.getElementById('newDocDate').value = '';
+  renderDocList();
+  renderCustomerGrid();
+  showToast('書類を追加しました');
+}
+
+// ========= ADD CUSTOMER =========
+function showAddCustomer() {
+  const name = prompt('お客様の氏名を入力してください:');
+  if (!name || !name.trim()) return;
+  const code = 'c' + Date.now();
+  data.customers.push({ id: code, name: name.trim(), code: code });
+  data.documents[code] = [];
+  renderCustomerGrid();
+  showToast(`「${name.trim()}」を追加しました`);
+}
+
+// ========= SHARE URL =========
+function copyShareUrl() {
+  if (!selectedCustomerId) { showToast('お客様を選択してください'); return; }
+  const url = document.getElementById('shareUrlDisplay').textContent;
+  navigator.clipboard.writeText(url).then(() => showToast('URLをコピーしました 📋'));
+}
+
+// ========= CLIENT VIEW =========
+function searchClient() {
+  const q = document.getElementById('clientSearchInput').value.trim();
+  const results = document.getElementById('clientSearchResults');
+  document.getElementById('clientDocView').style.display = 'none';
+  if (!q) { results.innerHTML = ''; return; }
+  const matches = data.customers.filter(c => c.name.includes(q));
+  if (matches.length === 0) {
+    results.innerHTML = '<div style="color:var(--text-sub);font-size:13px;padding:8px 0">該当するお客様が見つかりません</div>';
+    return;
+  }
+  results.innerHTML = matches.map(c => `
+    <div style="padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;margin-top:8px;font-size:14px;font-weight:500;transition:all 0.15s"
+      onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"
+      onclick="showClientDoc('${c.id}')">
+      👤 ${c.name}
+    </div>`).join('');
+}
+
+function showClientDoc(customerId) {
+  const c = data.customers.find(c => c.id === customerId);
+  if (!c) return;
+  document.getElementById('clientDocView').style.display = 'block';
+  document.getElementById('clientName').textContent = c.name + ' 様';
+
+  const docs = data.documents[c.id] || [];
+  const submitted = docs.filter(d => ['submitted','complete'].includes(d.status)).length;
+  const pending = docs.filter(d => d.status === 'pending').length;
+  const missing = docs.filter(d => ['missing','checking'].includes(d.status)).length;
+
+  document.getElementById('sumSubmitted').textContent = submitted;
+  document.getElementById('sumPending').textContent = pending;
+  document.getElementById('sumMissing').textContent = missing;
+  document.getElementById('clientSub').textContent = `全${docs.length}書類　最終更新：${new Date().toLocaleDateString('ja-JP')}`;
+
+  const list = document.getElementById('clientDocList');
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">登録された書類はありません</div></div>';
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="client-doc-item">
+      <div class="doc-icon ${d.status}">${STATUS_ICONS[d.status]}</div>
+      <div class="doc-info">
+        <div class="doc-info-name">${d.name}</div>
+        <div class="doc-info-meta">期日：${d.due || '未設定'}　　ステータス：${STATUS_LABELS[d.status]}</div>
+        ${d.comment ? `<div class="doc-info-comment">💬 ${d.comment}</div>` : ''}
+      </div>
+      <span class="status-badge status-${d.status}">${STATUS_LABELS[d.status]}</span>
+    </div>`).join('');
+
+  document.getElementById('clientSearchResults').innerHTML = '';
+  document.getElementById('clientSearchInput').value = '';
+}
+
+// ========= TOAST =========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
