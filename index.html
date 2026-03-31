@@ -181,7 +181,7 @@
       <div class="settings-row">
         <span class="settings-label">サブドメイン</span>
         <input class="settings-input" id="kintoneSubdomain" placeholder="例: option1sato">
-        <span style="font-size:12px;color:var(--text-sub)">.kintone.com</span>
+        <span style="font-size:12px;color:var(--text-sub)">.cybozu.com</span>
       </div>
       <div class="settings-row">
         <span class="settings-label">APIトークン</span>
@@ -553,7 +553,7 @@ function saveKintoneSettings(){
 
 async function testKintoneConnection(){
   try{
-    const res=await fetch(`https://${kintoneSettings.subdomain}.kintone.com/k/v1/records.json?app=${kintoneSettings.appId}&totalCount=true&query=limit+1`,
+    const res=await fetch(`https://${kintoneSettings.subdomain}.cybozu.com/k/v1/records.json?app=${kintoneSettings.appId}&totalCount=true&query=limit+1`,
       {headers:{'X-Cybozu-API-Token':kintoneSettings.token}});
     return res.ok;
   }catch{return false;}
@@ -587,19 +587,19 @@ async function saveToKintone(customer,doc){
   const projectFilter=doc.project?` and プロジェクト名 = "${doc.project}"`:'';
   try{
     const searchRes=await fetch(
-      `https://${kintoneSettings.subdomain}.kintone.com/k/v1/records.json?app=${kintoneSettings.appId}&query=${encodeURIComponent(`顧客CD = "${customer.code}" and 書類名 = "${doc.name}"${projectFilter}`)}`,
+      `https://${kintoneSettings.subdomain}.cybozu.com/k/v1/records.json?app=${kintoneSettings.appId}&query=${encodeURIComponent(`顧客CD = "${customer.code}" and 書類名 = "${doc.name}"${projectFilter}`)}`,
       {headers:{'X-Cybozu-API-Token':kintoneSettings.token}}
     );
     const searchData=await searchRes.json();
     if(searchData.records&&searchData.records.length>0){
       const recId=searchData.records[0]['$id'].value;
-      await fetch(`https://${kintoneSettings.subdomain}.kintone.com/k/v1/record.json`,{
+      await fetch(`https://${kintoneSettings.subdomain}.cybozu.com/k/v1/record.json`,{
         method:'PUT',
         headers:{'X-Cybozu-API-Token':kintoneSettings.token,'Content-Type':'application/json'},
         body:JSON.stringify({app:kintoneSettings.appId,id:recId,record})
       });
     } else {
-      await fetch(`https://${kintoneSettings.subdomain}.kintone.com/k/v1/record.json`,{
+      await fetch(`https://${kintoneSettings.subdomain}.cybozu.com/k/v1/record.json`,{
         method:'POST',
         headers:{'X-Cybozu-API-Token':kintoneSettings.token,'Content-Type':'application/json'},
         body:JSON.stringify({app:kintoneSettings.appId,record})
