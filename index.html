@@ -541,8 +541,6 @@ function exportForKintone(){
   navigator.clipboard.writeText(text).then(()=>showToast('バックアップデータをコピーしました（'+records.length+'件）📋'));
 }
 
-}
-
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
